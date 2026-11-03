@@ -16,6 +16,7 @@
   --haldi:#F0B12E; --stamp:#C2352A; --stamp-soft:#FBE7E4;
   --leaf:#17784F; --wa:#DCF6C8; --wa-ink:#10221A;
   --night:#121A3E; --night-ink:#EEF1FB; --night-muted:#AEB6D8; --night-rule:#2A3466;
+  --bar:#121A3E; --bar-ink:#EEF1FB; --bar-muted:#B7BFE0; --bar-rule:#2A3466; /* header: navy in both modes */
   --f-display:"Archivo","Mukta",system-ui,sans-serif;
   --f-body:"Mukta",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-hand:"Kalam","Segoe Print",cursive;
@@ -58,8 +59,8 @@ section{padding-block:clamp(56px,8vw,96px);scroll-margin-top:64px}
 .btn:not(.ink):hover{background:var(--sheet)}
 
 /* nav */
-nav.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--paper);border-bottom:1px solid var(--rule)}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:31;background:var(--paper)}
+nav.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bar);color:var(--bar-ink);border-bottom:1px solid var(--bar-rule)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:31;background:var(--bar)}
 nav.top .wrap{display:flex;align-items:center;gap:24px;padding-block:12px}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .logo .tab{position:relative;width:34px;height:26px;background:var(--folder);border-radius:3px 6px 4px 4px;border:1.5px solid var(--folder-edge)}
@@ -67,9 +68,11 @@ nav.top .wrap{display:flex;align-items:center;gap:24px;padding-block:12px}
 .logo .tab::after{content:"";position:absolute;right:5px;bottom:5px;width:9px;height:9px;border-radius:50%;border:2px solid var(--stamp)}
 .logo b{font-family:var(--f-display);font-weight:900;font-stretch:120%;font-size:21px}
 .links{display:flex;gap:22px;margin-left:auto}
-.links a{text-decoration:none;color:var(--muted);font-weight:500;font-size:16px}
-.links a:hover{color:var(--ink)}
+.links a{text-decoration:none;color:var(--bar-muted);font-weight:500;font-size:16px}
+.links a:hover{color:var(--bar-ink)}
 nav .btn{padding:9px 16px;font-size:15.5px}
+nav .btn.ink{background:var(--haldi);border-color:var(--haldi);color:var(--bar)}
+nav .btn.ink:hover{background:var(--bar-ink);border-color:var(--bar-ink)}
 @media (max-width:900px){.links{display:none}nav .btn{margin-left:auto}}
 
 /* hero */
