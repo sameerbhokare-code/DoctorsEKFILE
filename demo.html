@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>EK FILE Clinic Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Hind:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: clinic workstation. Slim header, queue rail on the left, patient + consultation in the main column; stacks on phones. */
+:root{
+  --bg:#F2F5F4; --surface:#FFFFFF; --sunk:#E9EEEC; --ink:#13201E; --muted:#566764; --line:#D7E0DD;
+  --accent:#0E6B61; --accent-ink:#FFFFFF; --accent-soft:#DDEFEC;
+  --mic:#E26B12; --mic-soft:#FDEBDD;
+  --danger:#B42318; --danger-soft:#FDE8E6; --ok:#257A47; --ok-soft:#E1F2E7; --warn:#9A6400; --warn-soft:#FBF0D9;
+  --paper:#FFFFFF; --paper-ink:#1B1B1B; --paper-line:#CFCFCF;
+  --wa-bg:#E9E1D6; --wa-bubble:#DCF8C6; --wa-ink:#111B21; --wa-head:#075E54;
+  --f-display:"Bricolage Grotesque", "Hind", system-ui, sans-serif;
+  --f-body:"Hind", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1514; --surface:#162120; --sunk:#1D2A28; --ink:#E4EDEB; --muted:#93A6A2; --line:#2A3A38;
+  --accent:#4DB6A7; --accent-ink:#06201D; --accent-soft:#16352F;
+  --mic:#F2893A; --mic-soft:#3A2414;
+  --danger:#FF7A6E; --danger-soft:#3B1715; --ok:#5CCB8A; --ok-soft:#14301F; --warn:#E9B44C; --warn-soft:#33270F;
+  --wa-bg:#0B141A; --wa-bubble:#005C4B; --wa-ink:#E9EDEF; --wa-head:#1F2C34;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1514; --surface:#162120; --sunk:#1D2A28; --ink:#E4EDEB; --muted:#93A6A2; --line:#2A3A38;
+  --accent:#4DB6A7; --accent-ink:#06201D; --accent-soft:#16352F;
+  --mic:#F2893A; --mic-soft:#3A2414;
+  --danger:#FF7A6E; --danger-soft:#3B1715; --ok:#5CCB8A; --ok-soft:#14301F; --warn:#E9B44C; --warn-soft:#33270F;
+  --wa-bg:#0B141A; --wa-bubble:#005C4B; --wa-ink:#E9EDEF; --wa-head:#1F2C34;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;margin:0}
+h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.2;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+
+/* header */
+header.top{background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding-block:12px}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand b{font-family:var(--f-display);font-size:22px;letter-spacing:.01em}
+.brand b span{color:var(--mic)}
+.brand small{color:var(--muted);font-style:italic}
+.clinic{color:var(--muted);font-size:14px}
+.top .spacer{flex:1}
+.search{display:flex;align-items:center;gap:6px;background:var(--sunk);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.search input{border:0;background:transparent;width:170px;outline:none}
+.demo-tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;background:var(--warn-soft);color:var(--warn);padding:3px 8px;border-radius:6px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding-block:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.stat .n{font-family:var(--f-display);font-size:28px;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat .l{color:var(--muted);font-size:13px}
+.stat.alert .n{color:var(--warn)}
+
+.grid{display:grid;grid-template-columns:290px minmax(0,1fr);gap:16px;padding-bottom:40px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.panel > .hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.panel > .hd h2{font-size:16px}
+.panel > .bd{padding:14px 16px}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rail{display:grid;gap:16px}
+
+/* queue */
+.queue{list-style:none;margin:0;padding:6px}
+.queue li button{width:100%;text-align:left;display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;border:0;background:transparent;padding:9px 10px;border-radius:8px}
+.queue li button:hover{background:var(--sunk)}
+.queue li button[aria-current="true"]{background:var(--accent-soft)}
+.tok{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.qname{font-weight:600;line-height:1.25}
+.qmeta{font-size:12.5px;color:var(--muted)}
+.pill{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.pill.waiting{background:var(--sunk);color:var(--muted)}
+.pill.with{background:var(--mic-soft);color:var(--mic)}
+.pill.done{background:var(--ok-soft);color:var(--ok)}
+.fu{list-style:none;margin:0;padding:0;display:grid}
+.fu li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--line)}
+.fu li:first-child{border-top:0}
+.fu .due{font-size:12.5px;color:var(--muted)}
+.fu .due.over{color:var(--danger);font-weight:600}
+.btn-sm{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:3px 9px;font-size:12.5px;white-space:nowrap}
+.btn-sm[disabled]{color:var(--ok);border-color:transparent;background:var(--ok-soft);cursor:default}
+
+/* patient summary */
+.main{display:grid;gap:16px;min-width:0}
+.ph{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end;justify-content:space-between;padding:16px}
+.ph h1{font-size:26px}
+.ph .sub{color:var(--muted)}
+.ids{font-family:var(--f-mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px}
+.allergy-strip{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 16px;background:var(--danger-soft);color:var(--danger);border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-weight:600}
+.allergy-strip.none{background:var(--sunk);color:var(--muted);font-weight:500}
+.allergy-strip .chip{background:var(--danger);color:var(--surface);border-radius:6px;padding:1px 8px;font-size:13px}
+.sumgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0}
+.sumgrid > div{padding:14px 16px;border-left:1px solid var(--line);min-width:0}
+.sumgrid > div:first-child{border-left:0}
+.sumgrid ul{margin:6px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.sumgrid li{line-height:1.35}
+.sumgrid li small{display:block;color:var(--muted);font-size:12.5px}
+.vit{font-family:var(--f-mono);font-size:13px}
+
+/* consultation */
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--sunk)}
+.lang button{border:0;background:transparent;padding:4px 12px;border-radius:999px;font-size:14px}
+.lang button[aria-pressed="true"]{background:var(--surface);color:var(--accent);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.speak{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:start}
+.mic{width:76px;height:76px;border-radius:50%;border:0;background:var(--mic);color:#fff;display:grid;place-items:center;position:relative}
+.mic svg{width:30px;height:30px}
+.mic.on::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:3px solid var(--mic);animation:pulse 1.2s ease-out infinite}
+@keyframes pulse{from{opacity:.9;transform:scale(.95)}to{opacity:0;transform:scale(1.25)}}
+@media (prefers-reduced-motion: reduce){.mic.on::after{animation:none;opacity:.6}}
+.miclabel{font-size:12.5px;color:var(--muted);text-align:center;margin-top:6px;width:76px}
+textarea{width:100%;min-height:96px;resize:vertical;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:10px 12px;line-height:1.5}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:500}
+.btn:hover{background:var(--sunk)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.primary[disabled]{opacity:.5;cursor:not-allowed}
+.note{font-size:13px;color:var(--muted)}
+.note.err{color:var(--danger)}
+.engine{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent)}
+.engine.local{background:var(--sunk);color:var(--muted)}
+
+/* rx table */
+.alertbox{border:1px solid var(--danger);background:var(--danger-soft);color:var(--danger);border-radius:8px;padding:10px 14px;display:grid;gap:4px}
+.alertbox b{font-size:15px}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table.rx{width:100%;border-collapse:collapse;min-width:640px}
+table.rx th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:8px 10px;background:var(--sunk);font-weight:600}
+table.rx td{padding:6px 8px;border-top:1px solid var(--line);vertical-align:middle}
+table.rx input,table.rx select{width:100%;border:1px solid transparent;background:transparent;border-radius:6px;padding:5px 6px}
+table.rx input:hover,table.rx select:hover,table.rx input:focus,table.rx select:focus{border-color:var(--line);background:var(--bg)}
+table.rx tr.bad td{background:var(--danger-soft)}
+table.rx tr.bad input{color:var(--danger);font-weight:600}
+.flag{display:inline-block;font-size:11.5px;font-weight:700;color:var(--danger);margin-left:6px}
+.x{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:4px 8px;border-radius:6px}
+.x:hover{background:var(--danger-soft);color:var(--danger)}
+.pat{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.extras{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:12px}
+label.f{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+label.f input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px;color:var(--ink)}
+.override{display:flex;gap:8px;align-items:flex-start;font-size:14px;color:var(--danger)}
+.stack{display:grid;gap:14px}
+
+/* output */
+.out{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+.sheet{background:var(--paper);color:var(--paper-ink);border:1px solid var(--paper-line);border-radius:4px;padding:28px 28px 22px;box-shadow:0 2px 10px rgba(0,0,0,.08);font-size:14px}
+.sheet .lh{display:flex;justify-content:space-between;gap:12px;border-bottom:2px solid var(--paper-ink);padding-bottom:10px}
+.sheet .lh h3{font-size:20px}
+.sheet .lh p{margin:0;font-size:12.5px;line-height:1.4}
+.sheet .pt{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 16px;padding:10px 0;border-bottom:1px solid var(--paper-line);font-size:13px}
+.sheet .alg{color:#B42318;font-weight:700}
+.sheet .rxsym{font-family:Georgia,serif;font-size:30px;line-height:1;margin:12px 0 4px}
+.sheet table{width:100%;border-collapse:collapse;font-size:13.5px}
+.sheet th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#555;border-bottom:1px solid var(--paper-line);padding:4px 4px}
+.sheet td{padding:6px 4px;border-bottom:1px dashed #E0E0E0;vertical-align:top}
+.sheet .dose{font-family:var(--f-mono);font-size:12.5px}
+.sheet .foot{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-top:16px}
+.sheet .qr{display:grid;gap:4px;justify-items:center;font-size:11px;text-align:center;max-width:120px}
+.sheet .qr div{width:104px;height:104px;background:#fff}
+.sheet .qr img,.sheet .qr canvas{width:104px!important;height:104px!important}
+.sheet .sign{text-align:right;font-size:12.5px}
+.sheet .sign .line{border-top:1px solid var(--paper-ink);padding-top:2px;margin-top:28px;min-width:160px}
+.sheet .fine{font-size:10.5px;color:#777;margin-top:12px;border-top:1px solid var(--paper-line);padding-top:6px}
+.phone{background:var(--wa-bg);border-radius:18px;overflow:hidden;border:1px solid var(--line)}
+.phone .wh{background:var(--wa-head);color:#fff;padding:10px 14px;display:flex;gap:10px;align-items:center}
+.phone .av{width:34px;height:34px;border-radius:50%;background:#25D366;display:grid;place-items:center;font-weight:700;color:#05301d;font-size:13px}
+.phone .wh small{display:block;opacity:.8;font-size:12px}
+.phone .msgs{padding:14px 12px 18px;display:grid;gap:8px}
+.bubble{background:var(--wa-bubble);color:var(--wa-ink);border-radius:8px 0 8px 8px;padding:8px 10px 18px;justify-self:end;max-width:95%;white-space:pre-wrap;font-size:14px;line-height:1.45;position:relative;overflow-wrap:anywhere}
+.bubble .t{position:absolute;right:8px;bottom:3px;font-size:10.5px;opacity:.65}
+.bubble.rem{max-width:80%}
+
+.hide{display:none}
+footer{color:var(--muted);font-size:12.5px;padding-block:0 32px}
+@media (max-width: 960px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .out{grid-template-columns:minmax(0,1fr)}
+  .rail{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+}
+@media (max-width: 640px){
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sumgrid{grid-template-columns:minmax(0,1fr)}
+  .sumgrid > div{border-left:0;border-top:1px solid var(--line)}
+  .sumgrid > div:first-child{border-top:0}
+  .extras{grid-template-columns:minmax(0,1fr)}
+  .speak{grid-template-columns:minmax(0,1fr);justify-items:start}
+  .sheet{padding:18px 14px}
+  .sheet .pt{grid-template-columns:minmax(0,1fr)}
+  .search input{width:120px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><b>EK <span>FILE</span></b><small>Ek patient, ek file, zindagi bhar</small></div>
+    <div class="clinic">Arogya Family Clinic, Kothrud · <span id="today"></span></div>
+    <div class="spacer"></div>
+    <label class="search" for="q"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Find by mobile or name" autocomplete="off"></label>
+    <a class="btn-sm" href="index.html" style="text-decoration:none">Back to website</a><span class="demo-tag">Prototype · demo data</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="stats" aria-label="Today's numbers">
+    <div class="stat"><div class="n" id="sToday">16</div><div class="l">Patients today</div></div>
+    <div class="stat"><div class="n" id="sSeen">0</div><div class="l">Consultations done</div></div>
+    <div class="stat"><div class="n" id="sWait">0</div><div class="l">Waiting now</div></div>
+    <div class="stat alert"><div class="n" id="sFu">3</div><div class="l">Follow-ups due</div></div>
+  </section>
+
+  <div class="grid">
+    <aside class="rail">
+      <section class="panel">
+        <div class="hd"><h2>Live queue</h2><span class="eyebrow">Token · status</span></div>
+        <ul class="queue" id="queue"></ul>
+      </section>
+      <section class="panel">
+        <div class="hd"><h2>Follow-ups due</h2><span class="eyebrow">WhatsApp</span></div>
+        <ul class="fu" id="fu"></ul>
+      </section>
+    </aside>
+
+    <main class="main">
+      <section class="panel" id="summary"></section>
+
+      <section class="panel" id="consult">
+        <div class="hd">
+          <h2>Voice prescription</h2>
+          <div class="lang" role="group" aria-label="Speaking language">
+            <button type="button" data-lang="en" aria-pressed="true">English</button>
+            <button type="button" data-lang="hi" aria-pressed="false">हिंदी</button>
+            <button type="button" data-lang="mr" aria-pressed="false">मराठी</button>
+          </div>
+        </div>
+        <div class="bd stack">
+          <div class="speak">
+            <div>
+              <button type="button" class="mic" id="mic" aria-label="Start speaking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+              <div class="miclabel" id="micLabel">Tap to speak</div>
+            </div>
+            <div class="stack" style="gap:8px;width:100%">
+              <label for="transcript" class="eyebrow">What the doctor said</label>
+              <textarea id="transcript" placeholder="Speak, or type the consultation here. Example: Metformin 500 twice a day after food for 30 days."></textarea>
+              <div class="row">
+                <button type="button" class="btn primary" id="draft">Draft prescription</button>
+                <button type="button" class="btn" id="sample">Use sample consultation</button>
+                <button type="button" class="btn" id="clear">Clear</button>
+              </div>
+              <div class="note" id="voiceNote" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <div id="draftArea" class="stack hide">
+            <div class="row" style="justify-content:space-between">
+              <div class="row"><h3 style="font-size:17px">Draft for review</h3><span class="engine" id="engine">AI draft</span></div>
+              <span class="note">Nothing is final until you confirm.</span>
+            </div>
+            <div id="alerts" class="stack" style="gap:8px" aria-live="assertive"></div>
+            <div class="tblwrap">
+              <table class="rx">
+                <thead><tr><th style="width:28%">Medicine</th><th style="width:13%">Dose</th><th style="width:20%">How often</th><th style="width:17%">When</th><th style="width:10%">Days</th><th style="width:6%"><span class="hide">Remove</span></th></tr></thead>
+                <tbody id="rxBody"></tbody>
+              </table>
+            </div>
+            <div class="row"><button type="button" class="btn" id="addRow">+ Add medicine</button></div>
+            <div class="extras">
+              <label class="f" for="advice">Advice<input id="advice" type="text" placeholder="e.g. Reduce sugar, walk 30 minutes daily"></label>
+              <label class="f" for="fuDays">Follow-up after (days)<input id="fuDays" type="number" min="0" max="365" inputmode="numeric"></label>
+            </div>
+            <label class="override hide" id="overrideWrap" for="override"><input type="checkbox" id="override"> I have reviewed the allergy warning and want to keep this medicine.</label>
+            <div class="row"><button type="button" class="btn primary" id="confirm">Confirm and print</button><span class="note" id="confirmNote"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel hide" id="output">
+        <div class="hd"><h2>Prescription ready</h2><button type="button" class="btn" id="nextPt">Next patient</button></div>
+        <div class="bd out">
+          <div>
+            <div class="eyebrow" style="margin-bottom:8px">Print preview</div>
+            <div class="sheet" id="sheet"></div>
+          </div>
+          <div>
+            <div class="eyebrow" style="margin-bottom:8px">Patient copy on WhatsApp (preview)</div>
+            <div class="phone" id="phone"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <footer>EK FILE early design prototype. All patients, numbers, the clinic and the record link are made up for demonstration. AI only drafts; the doctor decides. Seva First Innovation Challenge 2026, Maharashtra Zone.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const TODAY=new Date();
+const fmtDate=(d,loc='en-IN')=>d.toLocaleDateString(loc,{day:'numeric',month:'short',year:'numeric'});
+$('#today').textContent=TODAY.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+/* ---------- demo data (fictional) ---------- */
+const ALLERGY_GROUPS={
+  'Penicillin':{label:'a penicillin',drugs:['amoxicillin','amoxycillin','ampicillin','penicillin','augmentin','co-amoxiclav','amoxyclav','cloxacillin','mox ']},
+  'Sulfa drugs':{label:'a sulfa drug',drugs:['sulfamethoxazole','cotrimoxazole','co-trimoxazole','septran','bactrim','sulfasalazine']},
+  'NSAIDs':{label:'an NSAID painkiller',drugs:['aspirin','ibuprofen','diclofenac','naproxen','combiflam','brufen','aceclofenac','ketorolac']}
+};
+const patients=[
+ {id:'p1',token:7,name:'Sunita Patil',local:'सुनीता ताई',age:65,sex:'F',mobile:'98220 41234',abha:'91-4821-7730-2264',lang:'mr',
+  status:'with',reason:'Diabetes and BP review',
+  allergies:[{g:'Penicillin',note:'skin rash and swelling, 2019'}],
+  conditions:['Type 2 diabetes (since 2014)','High blood pressure (since 2016)'],
+  meds:[['Metformin 500 mg','1-0-1 after food'],['Amlodipine 5 mg','1-0-0']],
+  visits:[['12 Sep 2026','BP 148/90, sugar high. Dose unchanged.'],['14 Aug 2026','HbA1c 7.8% (lab report saved)'],['03 Jun 2026','Knee pain. Physiotherapy advised.']],
+  vitals:'BP 142/88 · Sugar (F) 156 · Wt 64 kg',
+  recipient:{name:'Rahul Patil (son)',phone:'+91 98220 4XXXX'}},
+ {id:'p2',token:8,name:'Ramesh Jadhav',local:'रमेश जी',age:52,sex:'M',mobile:'97650 88120',abha:'91-2290-5518-4410',lang:'mr',
+  status:'waiting',reason:'Cough and breathlessness',
+  allergies:[{g:'Sulfa drugs',note:'rash, 2021'}],
+  conditions:['Asthma (since 2010)'],
+  meds:[['Salbutamol inhaler','when needed'],['Montelukast 10 mg','0-0-1']],
+  visits:[['20 Oct 2026','Wheeze. Inhaler technique explained.']],
+  vitals:'SpO₂ 95% · Temp 99.1°F',
+  recipient:{name:'Ramesh Jadhav',phone:'+91 97650 8XXXX'}},
+ {id:'p3',token:9,name:'Ayesha Shaikh',local:'आयशा जी',age:28,sex:'F',mobile:'90110 23457',abha:'Not linked yet',lang:'hi',
+  status:'waiting',reason:'Fever for 2 days',
+  allergies:[],
+  conditions:['None recorded'],
+  meds:[],
+  visits:[['02 Feb 2026','Viral fever. Recovered.']],
+  vitals:'Temp 101.2°F · BP 112/74',
+  recipient:{name:'Ayesha Shaikh',phone:'+91 90110 2XXXX'}},
+ {id:'p4',token:10,name:'Vikram Kulkarni',local:'Vikram',age:41,sex:'M',mobile:'98901 77654',abha:'91-7735-1029-8846',lang:'en',
+  status:'waiting',reason:'Lower back pain',
+  allergies:[{g:'NSAIDs',note:'stomach bleeding with diclofenac, 2022'}],
+  conditions:['Acidity (on and off)'],
+  meds:[['Pantoprazole 40 mg','1-0-0 before food, when needed']],
+  visits:[['18 Mar 2026','Back strain after lifting.']],
+  vitals:'BP 128/84 · Wt 82 kg',
+  recipient:{name:'Vikram Kulkarni',phone:'+91 98901 7XXXX'}},
+ {id:'p5',token:6,name:'Anvi Deshmukh',local:'अन्वी',age:4,sex:'F',mobile:'99230 55102',abha:'91-6612-3390-1175',lang:'mr',
+  status:'done',reason:'Cough and cold',
+  allergies:[],
+  conditions:['None recorded'],
+  meds:[['Cetirizine syrup 2.5 ml','0-0-1 for 5 days']],
+  visits:[['Today','Cough and cold. Syrup given.']],
+  vitals:'Wt 15 kg · Temp 98.6°F',
+  recipient:{name:'Pooja Deshmukh (mother)',phone:'+91 99230 5XXXX'}}
+];
+const followups=[
+ {name:'Lata Gaikwad',why:'Diabetes review',due:'Overdue 4 days',over:true},
+ {name:'Prakash More',why:'BP check',due:'Due today'},
+ {name:'Sanjay Pawar',why:'Thyroid report',due:'Due tomorrow'}
+];
+const BASE_SEEN=10, BASE_TOTAL=16;
+
+const DRUGS=[
+ ['Metformin',['metformin','मेटफॉर्मिन','मेटफॉर्मीन','मेटफार्मिन','मेटफोर्मिन']],
+ ['Amoxicillin',['amoxicillin','amoxycillin','amoxicilin','एमोक्सिसिलिन','अमोक्सिसिलिन','अमॉक्सिसिलिन','अमोक्सीसिलिन','एमॉक्सिसिलिन']],
+ ['Augmentin',['augmentin','ऑगमेंटिन']],
+ ['Amlodipine',['amlodipine','amlodepine','एम्लोडिपिन','अम्लोडिपिन','अमलोडिपिन','अॅम्लोडिपिन']],
+ ['Telmisartan',['telmisartan','टेल्मिसार्टन','टेलमिसार्टन']],
+ ['Atorvastatin',['atorvastatin','एटोरवास्टेटिन','अटोरव्हास्टॅटिन']],
+ ['Glimepiride',['glimepiride','ग्लिमेपिराइड','ग्लिमेपिराईड']],
+ ['Paracetamol',['paracetamol','dolo','crocin','पैरासिटामोल','पॅरासिटामॉल','पेरासिटामोल','डोलो']],
+ ['Pantoprazole',['pantoprazole','pantop','पैंटोप्राजोल','पॅन्टोप्राझोल']],
+ ['Cetirizine',['cetirizine','सेटिरिज़िन','सेट्रिझिन','सिट्रीजिन']],
+ ['Azithromycin',['azithromycin','azithral','एज़िथ्रोमाइसिन','अझिथ्रोमायसिन']],
+ ['Ibuprofen',['ibuprofen','brufen','आइबुप्रोफेन','आयबुप्रोफेन']],
+ ['Diclofenac',['diclofenac','डाइक्लोफेनाक','डायक्लोफेनाक']],
+ ['Aspirin',['aspirin','एस्पिरिन','अॅस्पिरिन']],
+ ['Cotrimoxazole',['cotrimoxazole','co-trimoxazole','septran','सेप्ट्रान']],
+ ['Montelukast',['montelukast','मोंटेलुकास्ट','मॉन्टेलुकास्ट']],
+ ['Salbutamol',['salbutamol','asthalin','सालबुटामोल','साल्बुटामोल']],
+ ['Ondansetron',['ondansetron','ओंडांसेट्रॉन']],
+ ['Thiocolchicoside',['thiocolchicoside']],
+ ['Vitamin D3',['vitamin d3','vitamin d','विटामिन डी','व्हिटॅमिन डी']]
+];
+
+const SAMPLES={
+ en:'Metformin 500 twice a day after food for 30 days. Amoxicillin 500 three times a day for 5 days. Reduce sugar and walk 30 minutes daily. Follow up after 30 days.',
+ hi:'मेटफॉर्मिन 500 दिन में दो बार खाने के बाद 30 दिन। एमोक्सिसिलिन 500 दिन में तीन बार 5 दिन। मीठा कम खाएं और रोज़ 30 मिनट चलें। 30 दिन बाद फिर से दिखाएं।',
+ mr:'मेटफॉर्मिन 500 दिवसातून दोनदा जेवणानंतर 30 दिवस. अमोक्सिसिलिन 500 दिवसातून तीन वेळा 5 दिवस. गोड कमी खा आणि रोज 30 मिनिटे चाला. 30 दिवसांनी पुन्हा या.'
+};
+
+const FREQ={OD:'Once a day',BD:'Twice a day',TDS:'Three times a day',QID:'Four times a day',HS:'At bedtime',SOS:'When needed'};
+const PATTERN={OD:'1-0-0',BD:'1-0-1',TDS:'1-1-1',QID:'1-1-1-1',HS:'0-0-1',SOS:'SOS'};
+const FREQ_LOCAL={
+ mr:{OD:'रोज सकाळी 1',BD:'सकाळी 1, रात्री 1',TDS:'सकाळ, दुपार, रात्र 1-1',QID:'दिवसातून 4 वेळा',HS:'रात्री झोपताना 1',SOS:'गरज असेल तेव्हा'},
+ hi:{OD:'रोज़ सुबह 1',BD:'सुबह 1, रात को 1',TDS:'सुबह, दोपहर, रात 1-1',QID:'दिन में 4 बार',HS:'रात को सोते समय 1',SOS:'ज़रूरत होने पर'},
+ en:{OD:'1 in the morning',BD:'1 morning, 1 night',TDS:'1 morning, afternoon, night',QID:'4 times a day',HS:'1 at bedtime',SOS:'only when needed'}
+};
+const TIMING_LOCAL={mr:{'After food':'जेवणानंतर','Before food':'जेवणापूर्वी'},hi:{'After food':'खाने के बाद','Before food':'खाने से पहले'},en:{'After food':'after food','Before food':'before food'}};
+
+/* ---------- state ---------- */
+let current='p1', lang='en', rows=[], engineUsed='ai', followDone=new Set();
+const pt=()=>patients.find(p=>p.id===current);
+
+/* ---------- render: stats, queue, follow-ups ---------- */
+function renderStats(){
+  const done=patients.filter(p=>p.status==='done').length;
+  $('#sSeen').textContent=BASE_SEEN+done;
+  $('#sWait').textContent=patients.filter(p=>p.status==='waiting').length;
+  $('#sFu').textContent=followups.length-followDone.size;
+  $('#sToday').textContent=BASE_TOTAL;
+}
+function renderQueue(){
+  const q=$('#q').value.trim().toLowerCase().replace(/\s/g,'');
+  const order={with:0,waiting:1,done:2};
+  const list=patients.filter(p=>!q||p.mobile.replace(/\s/g,'').includes(q)||p.name.toLowerCase().replace(/\s/g,'').includes(q))
+    .sort((a,b)=>order[a.status]-order[b.status]||a.token-b.token);
+  const lbl={with:'With doctor',waiting:'Waiting',done:'Done'};
+  $('#queue').innerHTML=list.length?list.map(p=>`<li><button type="button" data-id="${p.id}" aria-current="${p.id===current}">
+    <span class="tok">#${p.token}</span>
+    <span><span class="qname">${esc(p.name)}</span><br><span class="qmeta">${p.age}${p.sex} · ${esc(p.reason)}</span></span>
+    <span class="pill ${p.status}">${lbl[p.status]}</span></button></li>`).join('')
+    :`<li class="note" style="padding:10px">No patient with that mobile number. New patients register in about 20 seconds.</li>`;
+}
+function renderFollowups(){
+  $('#fu').innerHTML=followups.map((f,i)=>`<li><div><div class="qname">${esc(f.name)}</div><div class="due ${f.over?'over':''}">${esc(f.why)} · ${esc(f.due)}</div></div>
+   <button type="button" class="btn-sm" data-fu="${i}" ${followDone.has(i)?'disabled':''}>${followDone.has(i)?'Reminder queued':'Send reminder'}</button></li>`).join('');
+}
+$('#queue').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(b)selectPatient(b.dataset.id)});
+$('#fu').addEventListener('click',e=>{const b=e.target.closest('button[data-fu]');if(b){followDone.add(+b.dataset.fu);renderFollowups();renderStats()}});
+$('#q').addEventListener('input',renderQueue);
+
+/* ---------- render: patient summary ---------- */
+function renderSummary(){
+  const p=pt();
+  const alg=p.allergies.length
+   ? `<div class="allergy-strip" role="alert"><span>⚠ Allergy:</span>${p.allergies.map(a=>`<span class="chip">${esc(a.g)}</span><span style="font-weight:500">${esc(a.note)}</span>`).join('')}</div>`
+   : `<div class="allergy-strip none">No known drug allergies recorded</div>`;
+  $('#summary').innerHTML=`
+   <div class="ph"><div><div class="eyebrow">Token #${p.token} · ${esc(p.reason)}</div><h1>${esc(p.name)}</h1><div class="sub">${p.age} years · ${p.sex==='F'?'Female':'Male'} · Prefers ${({mr:'Marathi',hi:'Hindi',en:'English'})[p.lang]}</div></div>
+   <div class="ids"><span>Mobile ${esc(p.mobile)}</span><span>ABHA ${esc(p.abha)}</span></div></div>
+   ${alg}
+   <div class="sumgrid">
+     <div><div class="eyebrow">Conditions · today</div><ul>${p.conditions.map(c=>`<li>${esc(c)}</li>`).join('')}<li class="vit">${esc(p.vitals)}</li></ul></div>
+     <div><div class="eyebrow">Current medicines</div><ul>${p.meds.length?p.meds.map(m=>`<li>${esc(m[0])}<small>${esc(m[1])}</small></li>`).join(''):'<li class="note">None</li>'}</ul></div>
+     <div><div class="eyebrow">Recent visits</div><ul>${p.visits.map(v=>`<li>${esc(v[1])}<small>${esc(v[0])}</small></li>`).join('')}</ul></div>
+   </div>`;
+}
+
+function selectPatient(id){
+  current=id;
+  const p=pt();
+  patients.forEach(x=>{if(x.status==='with'&&x.id!==id)x.status='waiting'});
+  if(p.status==='waiting')p.status='with';
+  rows=[];$('#transcript').value='';$('#advice').value='';$('#fuDays').value='';$('#override').checked=false;
+  $('#draftArea').classList.add('hide');$('#output').classList.add('hide');$('#voiceNote').textContent='';
+  renderAll();
+}
+function renderAll(){renderStats();renderQueue();renderFollowups();renderSummary()}
+
+/* ---------- language ---------- */
+document.querySelectorAll('.lang button').forEach(b=>b.addEventListener('click',()=>{
+  lang=b.dataset.lang;
+  document.querySelectorAll('.lang button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  if(rec&&listening){rec.stop()}
+}));
+
+/* ---------- voice input (Web Speech API) ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null, listening=false, baseText='';
+const micBtn=$('#mic'), micLabel=$('#micLabel'), vnote=$('#voiceNote');
+function setListening(on){listening=on;micBtn.classList.toggle('on',on);micLabel.textContent=on?'Listening… tap to stop':'Tap to speak';micBtn.setAttribute('aria-label',on?'Stop listening':'Start speaking')}
+micBtn.addEventListener('click',()=>{
+  if(!SR){vnote.className='note err';vnote.textContent='Voice input needs Chrome or Edge. You can type the consultation, or press Use sample consultation.';return}
+  if(listening){rec.stop();return}
+  try{
+    rec=new SR();rec.lang={en:'en-IN',hi:'hi-IN',mr:'mr-IN'}[lang];rec.continuous=true;rec.interimResults=true;
+    baseText=$('#transcript').value.trim();
+    rec.onresult=ev=>{let fin='',int='';for(let i=0;i<ev.results.length;i++){const r=ev.results[i];(r.isFinal?(fin+=r[0].transcript+' '):(int+=r[0].transcript))}
+      $('#transcript').value=[baseText,fin.trim(),int].filter(Boolean).join(' ')};
+    rec.onerror=ev=>{vnote.className='note err';
+      vnote.textContent=(ev.error==='not-allowed'||ev.error==='service-not-allowed')
+        ?'The microphone is blocked in this view. Open the demo in its own Chrome tab and allow the mic, or type the consultation, or press Use sample consultation.'
+        :ev.error==='no-speech'?'No speech heard. Tap the mic and try again.'
+        :ev.error==='network'?'Voice service could not be reached. Type the consultation or use the sample.'
+        :'Voice input stopped ('+ev.error+'). You can type instead.'};
+    rec.onend=()=>setListening(false);
+    rec.start();setListening(true);vnote.className='note';vnote.textContent='Speak naturally: medicine, dose, how often, for how many days.';
+  }catch(err){setListening(false);vnote.className='note err';vnote.textContent='Voice input could not start here. Type the consultation or use the sample.'}
+});
+$('#sample').addEventListener('click',()=>{$('#transcript').value=SAMPLES[lang];vnote.className='note';vnote.textContent='Sample consultation loaded. Press Draft prescription.'});
+$('#clear').addEventListener('click',()=>{$('#transcript').value='';rows=[];$('#draftArea').classList.add('hide');$('#output').classList.add('hide')});
+
+/* ---------- built-in reader (no AI) ---------- */
+const normDigits=s=>s.replace(/[०-९]/g,d=>'०१२३४५६७८९'.indexOf(d));
+const WORDNUM={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,ten:10,fifteen:15,thirty:30};
+function toDays(n,unit){unit=unit.toLowerCase();if(/week|हफ्त|हफ़्त|आठवड/.test(unit))return n*7;if(/month|मही|महि/.test(unit))return n*30;return n}
+const UNIT='(days?|weeks?|months?|दिन|दिनों|दिवसां|दिवस|हफ्ते|हफ़्ते|सप्ताह|आठवडे|आठवड्यां|महीने|महीना|महिने|महिना|महिन्यां)';
+function localParse(text){
+  let t=normDigits(text).replace(/(एक\s*)?दिन\s*(में|मे)/g,' रोज़ ').replace(/दिवसातून|दिवसात/g,' रोज ').replace(/\b(one|two|three|four|five|six|seven|ten|fifteen|thirty)\b(?=\s+(days?|weeks?|months?))/gi,m=>WORDNUM[m.toLowerCase()]);
+  let low=t.toLowerCase(), followUp=null, advice=[];
+  const fuRe=new RegExp('(?:follow[- ]?up|review|come back|see me)[^.।\\d]{0,20}(\\d+)\\s*'+UNIT+'|(\\d+)\\s*'+UNIT+'\\s*(?:बाद फिर|बाद दोबारा|के बाद फिर|नंतर पुन्हा|ांनी पुन्हा|नी पुन्हा|ानंतर पुन्हा)[^.।]*','i');
+  const fm=low.match(fuRe);
+  if(fm){followUp=fm[1]?toDays(+fm[1],fm[2]):toDays(+fm[3],fm[4]);low=low.replace(fm[0],' ')}
+  // advice: sentences without a medicine name
+  const sentences=low.split(/[.।\n]+/).map(s=>s.trim()).filter(Boolean);
+  const hasDrug=s=>DRUGS.some(d=>d[1].some(a=>s.includes(a)));
+  sentences.forEach(s=>{if(!hasDrug(s)&&/avoid|drink|walk|diet|exercise|reduce|rest|sugar|salt|water|खाएं|चलें|पानी|परहेज|आराम|खा |चाला|पाणी|टाळा|गोड|मीठा|कमी/.test(s)){advice.push(s);low=low.replace(s,' ')}});
+  // find medicine mentions
+  let hits=[];
+  DRUGS.forEach(([name,al])=>al.forEach(a=>{let i=low.indexOf(a);while(i>=0){hits.push({i,len:a.length,name});i=low.indexOf(a,i+1)}}));
+  hits.sort((a,b)=>a.i-b.i||b.len-a.len);
+  hits=hits.filter((h,k)=>!hits.slice(0,k).some(p=>h.i<p.i+p.len));
+  const meds=hits.map((h,k)=>{
+    const seg=low.slice(h.i+h.len,k+1<hits.length?hits[k+1].i:low.length);
+    let dose='';const dm=seg.match(/^[\s,:\-]*(\d+(?:\.\d+)?)\s*(mg|mcg|ml|g|iu|एमजी|मिलीग्राम|मिग्रॅ|मि\.ग्रॅ)?/i);
+    if(dm&&!new RegExp('^\\s*'+UNIT,'i').test(seg.slice(dm.index+dm[0].length))){const u=(dm[2]||'mg').toLowerCase();dose=dm[1]+' '+(/^(mg|mcg|ml|g|iu)$/.test(u)?u:'mg')}
+    let freq='OD';
+    if(/four times|qid|चार बार|चार वेळा|चारदा/.test(seg))freq='QID';
+    else if(/three times|thrice|\btds\b|\btid\b|तीन बार|तीन वेळा|तीनदा|तीन वेळ/.test(seg))freq='TDS';
+    else if(/twice|two times|\bbd\b|\bbid\b|दो बार|दोन वेळा|दोनदा|दोन वेळ/.test(seg))freq='BD';
+    else if(/if needed|when needed|as needed|\bsos\b|in case of|ज़रूरत|जरूरत|गरज/.test(seg))freq='SOS';
+    else if(/at night|bedtime|before sleep|सोते समय|रात को|झोपताना|रात्री/.test(seg)&&!/once a day in the morning/.test(seg))freq='HS';
+    let timing='';
+    if(/after food|after meal|after meals|after eating|खाने के बाद|भोजन के बाद|जेवणानंतर|जेवणा नंतर|जेवल्यानंतर|जेवणानंतर/.test(seg))timing='After food';
+    else if(/before food|before meal|before meals|empty stomach|खाने से पहले|खाली पेट|जेवणापूर्वी|जेवणाआधी|जेवणाच्या आधी|उपाशीपोटी/.test(seg))timing='Before food';
+    let days='';const dd=seg.match(new RegExp('(\\d+)\\s*'+UNIT,'i'));
+    if(dd)days=toDays(+dd[1],dd[2]);
+    return {name:h.name,dose,freq,timing,days};
+  });
+  return {meds,advice:advice.map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join('. '),followUp};
+}
+
+/* ---------- AI draft via Claude ---------- */
+let samplePromise=null;
+function getSample(){if(!samplePromise)samplePromise=(window.claude&&window.claude.use?window.claude.use('sample'):Promise.resolve(null)).catch(()=>null);return samplePromise}
+getSample();
+async function aiParse(text){
+  const sample=await getSample(); if(!sample)return null;
+  const langName={en:'English',hi:'Hindi',mr:'Marathi'}[lang];
+  const prompt=`You turn a doctor's spoken consultation at a small Indian clinic into a structured prescription draft.
+The doctor spoke in ${langName} (medicine names may be in English or written in Devanagari). Speech-to-text may contain small errors in medicine names; correct obvious ones to the standard generic or brand name.
+Rules:
+- Include only medicines the doctor actually said. Never invent or add medicines.
+- Do not comment on allergies or safety; the clinic checks that separately.
+- frequency must be one of: OD (once a day), BD (twice), TDS (three times), QID (four times), HS (at bedtime), SOS (when needed).
+- timing must be "After food", "Before food" or "" if not said.
+- days is a whole number of days (convert weeks/months), or null if not said.
+- dose like "500 mg"; if the unit is not said for a tablet, assume mg. "" if not said.
+- advice: short English summary of non-medicine advice, or "".
+- followUpDays: whole number of days until the next visit, or null.
+Return only JSON: {"medicines":[{"name":"","dose":"","frequency":"","timing":"","days":null}],"advice":"","followUpDays":null}
+
+Consultation:
+"""${text}"""`;
+  const r=await sample.json(prompt,{modelTier:'quick'});
+  if(!r||!Array.isArray(r.medicines))throw new Error('bad shape');
+  return {meds:r.medicines.map(m=>({name:String(m.name||'').trim(),dose:String(m.dose||'').trim(),freq:FREQ[m.frequency]?m.frequency:'OD',timing:m.timing==='After food'||m.timing==='Before food'?m.timing:'',days:Number.isFinite(+m.days)&&m.days!==null&&m.days!==''?Math.round(+m.days):''})).filter(m=>m.name),
+    advice:String(r.advice||''),followUp:Number.isFinite(+r.followUpDays)&&r.followUpDays!==null?Math.round(+r.followUpDays):null};
+}
+
+$('#draft').addEventListener('click',async()=>{
+  const text=$('#transcript').value.trim();
+  if(!text){vnote.className='note err';vnote.textContent='Nothing to draft yet. Speak, type, or press Use sample consultation.';return}
+  if(listening)rec.stop();
+  const btn=$('#draft');btn.disabled=true;btn.textContent='Drafting…';
+  let res=null;engineUsed='ai';
+  try{res=await aiParse(text)}catch(e){res=null;
+    if(e&&e.code==='not_granted'){vnote.className='note';vnote.textContent='AI was not allowed, so the built-in reader made this draft.'}
+    else{vnote.className='note';vnote.textContent='AI was not available just now, so the built-in reader made this draft.'}}
+  if(!res||!res.meds.length){const l=localParse(text);if(!res||l.meds.length){res=l;engineUsed='local'}}
+  btn.disabled=false;btn.textContent='Draft prescription';
+  rows=res.meds;
+  $('#advice').value=res.advice||'';
+  $('#fuDays').value=res.followUp??'';
+  $('#override').checked=false;
+  if(!rows.length){vnote.className='note err';vnote.textContent='No medicine names were recognised. Check the text, or add medicines by hand below.';rows=[{name:'',dose:'',freq:'OD',timing:'',days:''}]}
+  else if(engineUsed==='ai'){vnote.className='note';vnote.textContent='Draft ready. Check every line before confirming.'}
+  $('#engine').textContent=engineUsed==='ai'?'AI draft':'Built-in reader';
+  $('#engine').classList.toggle('local',engineUsed!=='ai');
+  $('#draftArea').classList.remove('hide');$('#output').classList.add('hide');
+  renderRows();
+  $('#draftArea').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+});
+
+/* ---------- allergy check (rule-based, runs on every edit) ---------- */
+function conflict(name){
+  const p=pt(), n=' '+name.toLowerCase()+' ';
+  for(const a of p.allergies){const g=ALLERGY_GROUPS[a.g];if(g&&g.drugs.some(d=>n.includes(d.trim().length<4?d:d.trim())))return {group:a.g,label:g.label,note:a.note}}
+  return null;
+}
+function renderRows(){
+  const opts=(o,v)=>Object.keys(o).map(k=>`<option value="${k}" ${k===v?'selected':''}>${o[k]}</option>`).join('');
+  $('#rxBody').innerHTML=rows.map((r,i)=>{const c=r.name&&conflict(r.name);return `<tr class="${c?'bad':''}">
+    <td><input aria-label="Medicine" data-i="${i}" data-k="name" value="${esc(r.name)}">${c?'<span class="flag">⚠ ALLERGY</span>':''}</td>
+    <td><input aria-label="Dose" data-i="${i}" data-k="dose" value="${esc(r.dose)}"></td>
+    <td><select aria-label="How often" data-i="${i}" data-k="freq">${opts(FREQ,r.freq)}</select><span class="pat">${PATTERN[r.freq]}</span></td>
+    <td><select aria-label="When" data-i="${i}" data-k="timing">${opts({'':'Any time','After food':'After food','Before food':'Before food'},r.timing)}</select></td>
+    <td><input aria-label="Days" data-i="${i}" data-k="days" type="number" min="0" inputmode="numeric" value="${esc(r.days)}"></td>
+    <td><button type="button" class="x" data-del="${i}" aria-label="Remove ${esc(r.name||'row')}">×</button></td></tr>`}).join('');
+  renderAlerts();
+}
+function renderAlerts(){
+  const p=pt();
+  const bad=rows.map(r=>({r,c:r.name&&conflict(r.name)})).filter(x=>x.c);
+  $('#alerts').innerHTML=bad.map(({r,c})=>`<div class="alertbox"><b>Allergy alert: ${esc(r.name)} is ${esc(c.label)}.</b><span>${esc(p.name)} is allergic to ${esc(c.group.toLowerCase())} (${esc(c.note)}). Remove it or choose another medicine.</span></div>`).join('');
+  $('#overrideWrap').classList.toggle('hide',!bad.length);
+  if(!bad.length)$('#override').checked=false;
+  updateConfirm(bad.length);
+  // highlight rows without full re-render
+  document.querySelectorAll('#rxBody tr').forEach((tr,i)=>{const c=rows[i]&&rows[i].name&&conflict(rows[i].name);tr.classList.toggle('bad',!!c);
+    let f=tr.querySelector('.flag');if(c&&!f){tr.cells[0].insertAdjacentHTML('beforeend','<span class="flag">⚠ ALLERGY</span>')}else if(!c&&f)f.remove()});
+}
+function updateConfirm(nBad){
+  if(nBad===undefined)nBad=rows.filter(r=>r.name&&conflict(r.name)).length;
+  const valid=rows.some(r=>r.name.trim());
+  const ok=valid&&(!nBad||$('#override').checked);
+  $('#confirm').disabled=!ok;
+  $('#confirmNote').textContent=!valid?'Add at least one medicine.':nBad&&!$('#override').checked?'Resolve the allergy alert to continue.':'';
+}
+$('#rxBody').addEventListener('input',e=>{const el=e.target;if(el.dataset.k){rows[+el.dataset.i][el.dataset.k]=el.value;if(el.dataset.k==='freq'){el.nextElementSibling.textContent=PATTERN[el.value]}renderAlerts()}});
+$('#rxBody').addEventListener('change',e=>{const el=e.target;if(el.dataset.k){rows[+el.dataset.i][el.dataset.k]=el.value;renderAlerts()}});
+$('#rxBody').addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(b){rows.splice(+b.dataset.del,1);renderRows()}});
+$('#addRow').addEventListener('click',()=>{rows.push({name:'',dose:'',freq:'OD',timing:'',days:''});renderRows();const ins=document.querySelectorAll('#rxBody input[data-k="name"]');ins[ins.length-1].focus()});
+$('#override').addEventListener('change',()=>updateConfirm());
+
+/* ---------- confirm: print sheet, QR, WhatsApp ---------- */
+let rxSeq=42;
+$('#confirm').addEventListener('click',()=>{
+  const p=pt(); const meds=rows.filter(r=>r.name.trim());
+  const fu=parseInt($('#fuDays').value,10); const fuDate=Number.isFinite(fu)&&fu>0?new Date(TODAY.getTime()+fu*864e5):null;
+  const advice=$('#advice').value.trim();
+  const ymd=TODAY.getFullYear()+String(TODAY.getMonth()+1).padStart(2,'0')+String(TODAY.getDate()).padStart(2,'0');
+  const rxId=`EKF-${ymd}-${String(rxSeq++).padStart(4,'0')}`;
+  const link=`https://ekfile.example/r/${rxId}`;
+  const flagged=meds.filter(m=>conflict(m.name));
+  $('#sheet').innerHTML=`
+   <div class="lh"><div><h3>Arogya Family Clinic</h3><p>Dr. Anjali Kale, MBBS · Reg. No. MMC-DEMO-0000<br>Karve Road, Kothrud, Pune 411038</p></div>
+    <div style="text-align:right"><p><b>${esc(rxId)}</b><br>${fmtDate(TODAY)}</p></div></div>
+   <div class="pt"><div><b>${esc(p.name)}</b>, ${p.age} ${p.sex}</div><div>Mobile ${esc(p.mobile)}</div>
+    <div>ABHA ${esc(p.abha)}</div><div class="${p.allergies.length?'alg':''}">Allergy: ${p.allergies.length?esc(p.allergies.map(a=>a.g).join(', ')):'None known'}</div></div>
+   <div class="rxsym">℞</div>
+   <table><thead><tr><th>#</th><th>Medicine</th><th>Dose</th><th>Schedule</th><th>Days</th></tr></thead><tbody>
+   ${meds.map((m,i)=>`<tr><td>${i+1}</td><td><b>${esc(m.name)}</b>${conflict(m.name)?' <span class="alg">(allergy reviewed by doctor)</span>':''}</td><td class="dose">${esc(m.dose||'-')}</td><td><span class="dose">${PATTERN[m.freq]}</span> ${m.timing?esc(m.timing.toLowerCase()):''}</td><td class="dose">${esc(m.days||'-')}</td></tr>`).join('')}
+   </tbody></table>
+   ${advice?`<p style="margin:12px 0 0"><b>Advice:</b> ${esc(advice)}</p>`:''}
+   <p style="margin:6px 0 0"><b>Follow-up:</b> ${fuDate?fmtDate(fuDate):'As needed'}</p>
+   <div class="foot"><div class="qr"><div id="qrbox" aria-label="QR code linking to the digital record"></div><span>Scan for the digital record</span></div>
+    <div class="sign"><div class="line">Dr. Anjali Kale</div><span>Confirmed ${TODAY.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span></div></div>
+   <div class="fine">Drafted by voice with EK FILE and checked by the doctor. Demo prescription with made-up data; not valid for dispensing.</div>`;
+  const box=document.getElementById('qrbox');
+  if(window.QRCode){try{new QRCode(box,{text:link,width:208,height:208,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M})}catch(e){box.textContent='QR unavailable'}}
+  else{box.style.cssText+='display:grid;place-items:center;border:1px dashed #999;font-size:10px';box.textContent='QR loads online'}
+
+  // WhatsApp
+  const L=p.lang, fl=FREQ_LOCAL[L], tl=TIMING_LOCAL[L];
+  const dLoc=fuDate?fuDate.toLocaleDateString(L==='en'?'en-IN':L+'-IN',{day:'numeric',month:'long',year:'numeric'}):null;
+  const lines=meds.map((m,i)=>{const bits=[fl[m.freq]];if(m.timing)bits.push(tl[m.timing]);if(m.days)bits.push(L==='mr'?`${m.days} दिवस`:L==='hi'?`${m.days} दिन`:`${m.days} days`);return `${i+1}. *${m.name}${m.dose?' '+m.dose:''}*\n    ${bits.join(' · ')}`}).join('\n');
+  let msg, rem;
+  if(L==='mr'){msg=`नमस्कार ${p.local} 🙏\nआज आरोग्य फॅमिली क्लिनिकमध्ये डॉ. अंजली काळे यांनी दिलेली औषधे:\n\n${lines}${advice?`\n\nसल्ला: ${advice}`:''}\n\n${dLoc?`पुढची भेट: *${dLoc}*\n`:''}औषधाची आठवण रोज याच नंबरवर येईल.\nपूर्ण रेकॉर्ड: ${link}\n\n— EK FILE`;
+    rem=`⏰ ${p.local}, सकाळची औषधे घ्यायची वेळ झाली: ${meds.filter(m=>m.freq!=='HS'&&m.freq!=='SOS').map(m=>m.name).join(', ')||meds[0].name}. घेतली असल्यास 1 लिहा.`}
+  else if(L==='hi'){msg=`नमस्ते ${p.local} 🙏\nआज आरोग्य फैमिली क्लिनिक में डॉ. अंजली काले ने ये दवाइयाँ दी हैं:\n\n${lines}${advice?`\n\nसलाह: ${advice}`:''}\n\n${dLoc?`अगली विज़िट: *${dLoc}*\n`:''}दवा का रिमाइंडर रोज़ इसी नंबर पर आएगा।\nपूरा रिकॉर्ड: ${link}\n\n— EK FILE`;
+    rem=`⏰ ${p.local}, सुबह की दवा का समय: ${meds.filter(m=>m.freq!=='HS'&&m.freq!=='SOS').map(m=>m.name).join(', ')||meds[0].name}. ले ली हो तो 1 लिखें।`}
+  else{msg=`Hello ${p.local},\nHere is today's prescription from Dr. Anjali Kale, Arogya Family Clinic:\n\n${lines}${advice?`\n\nAdvice: ${advice}`:''}\n\n${dLoc?`Next visit: *${dLoc}*\n`:''}Medicine reminders will come to this number every day.\nFull record: ${link}\n\n— EK FILE`;
+    rem=`⏰ ${p.local}, time for your morning medicines: ${meds.filter(m=>m.freq!=='HS'&&m.freq!=='SOS').map(m=>m.name).join(', ')||meds[0].name}. Reply 1 once taken.`}
+  const bubble=s=>esc(s).replace(/\*([^*\n]+)\*/g,'<b>$1</b>');
+  const time=TODAY.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  $('#phone').innerHTML=`<div class="wh"><div class="av">EK</div><div><b>EK FILE · Arogya Clinic</b><small>To ${esc(p.recipient.name)} · ${esc(p.recipient.phone)}</small></div></div>
+    <div class="msgs"><div class="bubble">${bubble(msg)}<span class="t">${time} ✓✓</span></div>
+    <div class="note" style="text-align:center;color:var(--wa-ink);opacity:.7;font-size:12px">Tomorrow, 8:00 am</div>
+    <div class="bubble rem">${bubble(rem)}<span class="t">08:00</span></div></div>`;
+
+  // record the visit
+  p.status='done';
+  p.visits.unshift(['Today','Prescribed '+meds.map(m=>m.name).join(', ')+(flagged.length?' (allergy reviewed)':'')]);
+  renderStats();renderQueue();renderSummary();
+  $('#output').classList.remove('hide');
+  $('#output').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+});
+$('#nextPt').addEventListener('click',()=>{const n=patients.filter(p=>p.status==='waiting').sort((a,b)=>a.token-b.token)[0];if(n)selectPatient(n.id);else{$('#output').classList.add('hide');window.scrollTo({top:0})}});
+
+renderAll();
+updateConfirm();
+})();
+</script>
+</body>
+</html>
